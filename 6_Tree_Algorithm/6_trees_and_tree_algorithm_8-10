@@ -1,0 +1,245 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 8. Priority Queues with Binary Heaps\n",
+    "\n",
+    "Binary heap으로 priority queue 자료구조를 만들어봅시다!\n",
+    "\n",
+    "0. Priority Queue\n",
+    "    - Queue는 queue인데 정렬이 되어 있는 queue (여기서는 오름차순)\n",
+    "    - Enqueue : sorting 을 하면서 enqueue 된다. (the logical order of items inside a queue is determined by their priority)\n",
+    "    - 원래는 insert(O(n)) & sort(O(nlogn)) 을 거쳐야 하지만 binary heap을 사용하면 O(logn)으로 가능하다.\n",
+    "\n",
+    "1. Heap\n",
+    "    - 최댓값 또는 최솟값을 빨리 찾기 위해 고안된 Complete binary tree.\n",
+    "    - **Binary tree** : 모든 레벨의 노드가 최대 두개의 자식 노드를 가진 트리. 자식노드는 left, right의 자리를 가지고 있다.\n",
+    "    - **Complete binary tree** : leaf node (가장 말단의 노드)를 제외하고는 모든 노드가 '채워진' binary tree / 가장 마지막 subtree 빼고는 left, right가 모두 채워져 있어야함.\n",
+    "    - Tree representation 처럼 쓰지 않고 그냥 단일 list를 사용한다. 이것이 binary heap형태로 되어있다고 상-상하며 연산을 구현하면 된다.(When we diagram the heap it looks a lot like a tree, but when we implement it we use only a single list)\n",
+    "    - min Heap(오름차순) & max Heap(내림차순)\n",
+    "    - [Heap sort](https://en.wikipedia.org/wiki/Heapsort) : O(nlogn)의 완전 힙한 시간복잡도를 가진다. \n",
+    "    (* 참고 : Quicksort 가 평균 O(nlogn), 최대 O(n^2)이다.)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 9. Binary Heap Operations"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Binary Heap 자료구조 만들기\n",
+    "```\n",
+    "BinaryHeap()\n",
+    "insert(k)\n",
+    "minChild()   # 가장 작은 값을 리턴만 한다.\n",
+    "delMin()    # 가장 작은 값을 리턴하면서 삭제한다.\n",
+    "isEmpty()\n",
+    "size()\n",
+    "buildHeap(list) # key 값 리스트를 가지고 새로운 heap을 만든다.\n",
+    "```"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 10. Binary Heap Implementation"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 1. The Structure Property\n",
+    "![Complete binary tree](http://interactivepython.org/courselib/static/pythonds/_images/compTree.png)\n",
+    "1. `x // 2` 의 아주 간단한 integer division 만으로도 모든 노드의 자리를 구할 수 있다(easy to traverse the nodes).\n",
+    "2. 예를 들어, 어떤 노드가 `p`의 자리에 있다고 할 때, 이 노드의 left child는 `2p` 자리에 있다. right child 의 자리는 `2p+1`이다. 당연히 p의 부모 노드의 자리는 `p/2`이다."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 2. The Heap Order Property\n",
+    "- In a heap, for every node x with parent p, the key in p is smaller than or equal to the key in x (근데 smaller한 경우는 어떤 경우지?)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3. Heap Operations"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "class BinHeap:\n",
+    "    def __init__(self):\n",
+    "        self.heapList = [0] # this zero is not used, but is there so that simple integer division can be used in later methods.\n",
+    "        self.currentSize = 0\n",
+    "    \n",
+    "    def insert(self,k):\n",
+    "        self.heapList.append(k)\n",
+    "        self.currentSize = self.currentSize + 1\n",
+    "        self.percUp(self.currentSize)\n",
+    "    \n",
+    "    def percUp(self,i): # i에는 currentSize가 들어감\n",
+    "        while i // 2 > 0:\n",
+    "            if self.heapList[i] < self.heapList[i // 2]: # 가장 마지막에 넣은 값보다 부모노드가 클때,\n",
+    "                self.heapList[i // 2], self.heapList[i] = self.heapList[i], self.heapList[i //2] # 부모랑 자식의 자리를 바꿔주고\n",
+    "            i = i // 2 # root까지 올라갔다 온다. 이거 때문에 (O(logn))\n",
+    "        \n",
+    "        # 이 과정을 거치는 동안 siblings에는 아무런 영향을 미치지 않는다!\n",
+    "    \n",
+    "    def delMin(self):\n",
+    "        retval = self.heapList[1] # __init__에서 제일 첫 노드는 0이기 때문에 실질적으로 heap의 root는 self.heapList[1] 이다.\n",
+    "        self.heapList[1] = self.heapList[self.currentSize] # 가장 마지막 값을 root에 넣어준다.\n",
+    "        self.currentSize = self.currentSize - 1\n",
+    "        self.heapList.pop() # leaf node 자리로 옮겨온 최솟값을 제거\n",
+    "        self.percDown(1)\n",
+    "        return retval \n",
+    "\n",
+    "    def percDown(self,i): # 중요!: i자리의 있는 노드의 자식은 i*2또는 i*2+1이다.\n",
+    "        while (i * 2) <= self.currentSize: # 마지막 노드까지 검사 (1, 2, 4 까지 감)\n",
+    "            mc = self.minChild(i) # self.heapList[i]의 자식 중에 작은 자식의 자리 = mc\n",
+    "            if self.heapList[i] > self.heapList[mc]: # 작은 자식이 자기보다 작다면...\n",
+    "                self.heapList[mc], self.heapList[i] = self.heapList[i], self.heapList[mc] # 그 자식과 자리를 바꾼다.\n",
+    "            i = mc # 위의 과정 반복\n",
+    "            \n",
+    "    def minChild(self,i): # right node와 left node 중 더 작은 것 찾기\n",
+    "        if i * 2 + 1 > self.currentSize:\n",
+    "            return i * 2\n",
+    "        else:\n",
+    "            if self.heapList[i*2] < self.heapList[i*2+1]:\n",
+    "                return i * 2\n",
+    "            else:\n",
+    "                return i * 2 + 1\n",
+    "                        \n",
+    "    def buildHeap(self,alist):\n",
+    "        i = len(alist) // 2 # 가장 마지막 노드의 부모 자리\n",
+    "        self.currentSize = len(alist)\n",
+    "        self.heapList = [0] + alist[:] \n",
+    "        while (i > 0):\n",
+    "            self.percDown(i) # 마지막 노드 중 작은 것과 부모 노드 비교해서 부모가 더 크면 자리 바꿈\n",
+    "            i = i - 1 # 아까 그 부모의 sibling 도 똑같이 자리바꿈 해주기"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "bh = BinHeap()\n",
+    "bh.insert(5)\n",
+    "bh.insert(9)\n",
+    "bh.insert(11)\n",
+    "bh.insert(14)\n",
+    "bh.insert(18)\n",
+    "bh.insert(19)\n",
+    "bh.insert(21)\n",
+    "bh.insert(33)\n",
+    "bh.insert(17)\n",
+    "bh.insert(27)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "[Visualizing heap insert()](http://pythontutor.com/visualize.html#togetherjs=ndujJv4eKT)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 38,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "5"
+      ]
+     },
+     "execution_count": 38,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "bh.delMin()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "[Visualizing heap delMin()]()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "list = [5,9,11,14,18,19,21,33,17,27]\n",
+    "bh.buildHeap(list)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.1"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
